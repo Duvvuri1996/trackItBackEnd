@@ -7,12 +7,20 @@ const fs = require('fs');
 const http = require('http');
 
 const app = express();
+const config = require('./config/config');
+const logger = require('./app/libs/logger')
+const errorHandlerMiddleware = require('./app/middlewares/appErrorHandler')
+const reqLogger = require('./app/middlewares/reqLogger')
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(reqLogger.logIp);
+app.use(errorHandlerMiddleware.errorHandler)
+app.use(errorHandlerMiddleware.notFoundHandler)
 
-const config = require('./config/config')
+const models = './app/models';
+const routes = './app/routes';
 
 app.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -20,6 +28,19 @@ app.all('*', function(req, res, next) {
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
     next();
 });
+
+fs.readdirSync(models).forEach(function (file) {
+    if(~file.indexOf('.js')) {
+        require(models+'/'+file)
+    }
+})
+
+fs.readdirSync(routes).forEach(function (file) {
+    if(~file.indexOf('.js')) {
+        let route = require(routes+'/'+file)
+        route.setRouter(app)
+    }
+})
 
 /**
  * create http server
