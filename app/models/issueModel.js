@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 let Issue = new Schema ({
+    
     issueId : String,
 
     status : {
@@ -36,7 +37,10 @@ let Issue = new Schema ({
         default : ''
     },
 
-    numOfDays : String
+    numOfDays : {
+        type : String,
+        default : 0
+    }
 
 })
 

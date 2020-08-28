@@ -21,7 +21,6 @@ let User = new Schema ({
         type : String,
         default : ''
     },
-
     country : {
         type : String,
         default : ''
@@ -32,7 +31,8 @@ let User = new Schema ({
     },
     
     recoveryTokenExpiration : {
-        type : Date
+        type : Date,
+        default : ''
     }
 })
 

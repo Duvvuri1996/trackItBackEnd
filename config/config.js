@@ -9,11 +9,15 @@ AppConfig.db = {
     uri : 'mongodb://127.0.0.1:27017/trackitDB'
 }
 AppConfig.apiVersion = '/api/v1'
-
+AppConfig.mailer = {
+    user : 'sowmya@gmail.com',
+    pass : 'duvvuri'
+}
 module.exports = {
     port : AppConfig.port,
     allowedCORSorigin : AppConfig.allowedCORSorigin,
     env : AppConfig.env,
     db : AppConfig.db,
-    apiVersion : AppConfig.apiVersion
+    apiVersion : AppConfig.apiVersion,
+    mailer : AppConfig.mailer
 }

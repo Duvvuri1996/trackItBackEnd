@@ -4,7 +4,9 @@ const Schema = mongoose.Schema;
 let Watch = new Schema ({
     watcherId : String,
 
-    issueId : String
+    issueId : String,
+
+    userId : String
 })
 
 module.exports = mongoose.model('Watch', Watch)
