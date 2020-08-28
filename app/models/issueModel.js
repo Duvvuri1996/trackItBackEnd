@@ -43,5 +43,6 @@ let Issue = new Schema ({
     }
 
 })
+User.index({ '$**' : 'text' })
 
 module.exports = mongoose.model('Issue', Issue)

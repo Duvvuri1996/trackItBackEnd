@@ -18,7 +18,7 @@ const Comment = new Schema ({
         default : 'No comment'
     },
 
-    creatodOn : {
+    createdOn : {
         type : Date,
         default : Date.now()
     }

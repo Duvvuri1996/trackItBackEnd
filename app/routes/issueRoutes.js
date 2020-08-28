@@ -28,19 +28,19 @@ module.exports.setRouter = (app) => {
 
     app.get(`${baseUrl}/watchofuser/:userId`, auth.isAuthorized, controller.allWatchOfUser);
 
-    app.post(`${baseUrl}/assignee/:issueId`, auth.isAuthorized, controller.addAssignee);
+    //app.post(`${baseUrl}/assignee/:issueId`, auth.isAuthorized, controller.addAssignee);
 
     app.post(`${baseUrl}/search`, auth.isAuthorized, controller.searchIssue);
 
     app.post(`${baseUrl}/createcomment`, auth.isAuthorized, controller.createComment);
 
-    app.put(`${baseUrl}/editcomment`, auth.isAuthorized, controller.editComment);
+    app.put(`${baseUrl}/editcomment/:commentId`, auth.isAuthorized, controller.editComment);
 
-    app.put(`${baseUrl}/deletecomment`, auth.isAuthorized, controller.deleteComment);
+    app.put(`${baseUrl}/deletecomment/:commentId`, auth.isAuthorized, controller.deleteComment);
 
     app.get(`${baseUrl}/comments/:issueId`, auth.isAuthorized, controller.getAllComments);
 
-    app.get(`${baseUrl}/:eventId/status`, auth.isAuthorized, controller.status);
+    //app.get(`${baseUrl}/:eventId/status`, auth.isAuthorized, controller.status);
 
     app.get(`${baseUrl}/numOfDays`, auth.isAuthorized, controller.numOfDays);
 

@@ -210,3 +210,142 @@ let allWatchOfUser = (req, res) => {
     }
 }
 
+let searchIssue = (req, res) => {
+    issueModel.find({ $text : { $search : req.body.search } }).limit(10).exec((err, docs) => {
+        if(err) {
+            logger.error(err.message, "Error occured at searchIssue() function", 10)
+            let apiResponse = response.generate(true, "Unknown error occured", 500, null)
+            res.send(apiResponse)
+        } else if(check.isEmpty(docs)) {
+            logger.error("docs are empty", "at searchIssue() function", 7)
+            let apiResponse = response.generate(true, "docs are empty", 404, null)
+            res.send(apiResponse)
+        } else {
+            logger.info("Docs found", "at searchIssue() function", 10)
+            let apiResposne = response.generate(false, "Docs found", 200, docs)
+            res.send(apiResponse)
+        }
+    })
+}
+
+let createComment = (req, res) => {
+    let newComment = {
+        commentId : shortid.generate(),
+        reporterId : req.body.reporterId,
+        reporterName : req.body.reporterName,
+        issueId : req.body.issueId,
+        comment : req.body.comment,
+        createdOn : timeLib.now()
+    }
+    newComment.save((err, result) => {
+        if(err) {
+            logger.error(err.message, "Error occured at createComment() function", 10)
+            let apiResponse = response.generate(true, "Unknown error occured", 500, null)
+            res.send(apiResponse)
+        } else {
+            logger.info("Comment created successfully", "at createComment() function", 10)
+            let apiResposne = response.generate(false, "Comment created successfullu", 200, result)
+            res.send(apiResponse)
+        }
+    })
+}
+
+let editComment = (req, res) => {
+    commentModel.findOne({ commentId : req.params.commentId })
+    .exec((err, details) => {
+        if(err) {
+            logger.error(err.message, "Error occured at editComment() function", 10)
+            let apiResponse = response.generate(true, "Unknown error occured in finding comment", 500, null)
+            res.send(apiResponse)
+        } else {
+            commentModel.updateOne({ comment : req.body.comment })
+            .exec((err, result) => {
+                if(err) {
+                    logger.error(err.message, "Error occured at editComment() function", 7)
+                    let apiResponse = response.generate(true, "Unknown error occured in updating comment", 500, null)
+                    res.send(apiResponse)
+                } else {
+                    logger.info("Successfully updated comment", "at editComment() function", 10)
+                    let apiResponse = response.generate(false, "Successfully updated comment", 200, result)
+                    res.send(apiResponse)
+                }
+            })
+        }
+    })
+}
+
+let deleteComment = (req, res) => {
+    commentModel.deleteOne({ commentId : req.params.commentId })
+    .exec((err, result) => {
+        if(err) {
+            logger.error(err.message, "Error occured at deleteComment() function", 7)
+            let apiResponse = response.generate(true, "Unknown error occured in deleteing comment", 500, null)
+            res.send(apiResponse)
+        } else {
+            logger.info("Successfully deleted comment", "at deleteComment() function", 10)
+            let apiResponse = response.generate(false, "Successfully deleted comment", 200, null)
+            res.send(apiResponse)
+        }
+    })
+}
+
+let getAllComments = (req, res) => {
+    commentId.find({ issueId : req.params.issueId })
+    .exec((err, commentDetails) => {
+        if(err) {
+            logger.error(err.message, "Error occured at getAllComments() function", 7)
+            let apiResponse = response.generate(true, "Unknown error occured", 500, null)
+            res.send(apiResponse)
+        } else if(check.isEmpty(commentDetails)) {    
+                logger.error("Details are empty", "at getAllComments() function", 7)
+                let apiResponse = response.generate(true, "Details are empty", 404, null)
+                res.send(apiResponse)
+        } else {
+            logger.info("All details found", "at getAllComments() function", 10)
+            let apiResponse = response.generate(false, "All details found successfully", 200, commentDetails)
+            res.send(apiResponse)
+        }
+    })
+}
+
+let numOfDays = (req, res) => {
+    issueModel.findOne({ issueId : req.body.issueId }, (err, details) => {
+        if(err) {
+            logger.error(err.message, "Error occured at numOfDays() function", 7)
+            let apiResponse = response.generate(true, "Unknown error occured", 500, null)
+            res.send(apiResponse)
+        }else {
+            if(details.createdOn) {
+                let date1 = details.createdOn
+                let date2 = new Date()
+                function diff(d1, d2) {
+                    return Math.round((d2-d1)/(1000*60*60*24))
+                }
+                if(date2.getDate() > date1.getDate()){
+                    let numDays = diff(date1, date2)
+                    let apiResponse = response.generate(false, "NumDays", 200, numDays)
+                    res.send(apiResponse)
+                    
+                } else {
+                    let hours1 = date1.getHours()
+                    let hours2 = date2.getHours()
+                    if(hours2 > hours1){
+                        let numDays = (hours2-hours1)+1
+                        let apiResponse = response.generate(false, "NumDays", 200, numDays)
+                        res.send(apiResponse)
+                    } else {
+                        let minutes1 = date1.getMinutes()
+                        let minutes2 = date2.getMinutes()
+                        let apiResponse = response.generate(false, "NumDays", 200, numDays)
+                        res.send(apiResponse)
+                    }
+
+                }
+            } else {
+                logger.error("CreatedOn doesnot exists", "at numDays()", 3)
+                let apiResponse = response.generate(true, "CreatedOn doesnot exists", 404, null)
+                res.send(apiResponse)
+            }
+        }
+    })
+}
