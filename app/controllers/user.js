@@ -543,7 +543,21 @@ let singleUser = (req,res) => {
     })
 }
 let SocialUsers = (req, res) => {
-    
+    socialModel.find().select('-__v -_id').lean().exec((err, result) => {
+        if (err) {
+            logger.error(err.message, 'error in SocailUsers() function', 10)
+            let apiResponse = response.generate(true, "Failed to find user", 404, null)
+            res.send(apiResponse)
+        } else if (check.isEmpty(result)) {
+            logger.error('No user Found', 'SocailUsers() function', 7)
+            let apiResponse = response.generate(true, "No user found", 500, null)
+            res.send(apiResponse)
+        } else {
+            logger.info("User found", "SocailUsers() function", 10)
+            let apiResponse = response.generate(false, "All Social user details found", 200, result)
+            res.send(apiResponse)
+        }
+    })
 }
 
 module.exports = {

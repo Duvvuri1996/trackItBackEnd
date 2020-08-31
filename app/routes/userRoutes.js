@@ -2,6 +2,8 @@ const express = require('express');
 const config = require('/home/sowmya/trackIt/trackItBackEnd/config/config');
 const auth = require('../middlewares/auth');
 const controller = require('../controllers/user');
+const { Passport } = require('passport');
+const passport = require('passport');
 
 module.exports.setRouter = (app) => {
 
@@ -23,6 +25,24 @@ module.exports.setRouter = (app) => {
 
     app.get(`${baseUrl}/singleuser/:userId`, auth.isAuthorized, controller.singleUser);
 
-    app.get(`${baseUrl}/socialuser/:userId`, auth.isAuthorized, controller.SocialUsers);
+    app.get(`${baseUrl}/allSocialUsers`, auth.isAuthorized, controller.SocialUsers);
+
+    app.get('/auth/google/', Passport.authenticate('google', { scope: ['profile', 'email']}));
+
+    app.get('/auth.google/callback', passport.authenticate('google'), (req, res) => {
+        let responseHTML = '<html><head><title>Main</title></head><body></body><script>res = %value%; window.opener.postMessage(res, "*");window.close();</script></html>'
+         responseHTML = responseHTML.replace('%value%', JSON.stringify({
+        user: req.user
+    }));
+    res.status(200).send(responseHTML)
+    })
+
+    app.get('/api/current_user', (req, res) => {
+        res.send(req.user)
+    })
+
+    app.get('/api/logout', (req, res) => {
+        res.send(req.logout())
+    })
 
 }

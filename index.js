@@ -2,22 +2,30 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const http = require('http');
-
+const passportCon = require('./passport/passport');
 const app = express();
 const config = require('./config/config');
-const logger = require('./app/libs/logger')
-const errorHandlerMiddleware = require('./app/middlewares/appErrorHandler')
-const reqLogger = require('./app/middlewares/reqLogger')
+const logger = require('./app/libs/logger');
+const errorHandlerMiddleware = require('./app/middlewares/appErrorHandler');
+const reqLogger = require('./app/middlewares/reqLogger');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(reqLogger.logIp);
-app.use(errorHandlerMiddleware.errorHandler)
-app.use(errorHandlerMiddleware.notFoundHandler)
+app.use(errorHandlerMiddleware.errorHandler);
+app.use(errorHandlerMiddleware.notFoundHandler);
+app.use(cookieSession({
+    maxAge : 24*24*60*1000*30,
+    Keys : [abcdefghijkl]
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
 
 const models = './app/models';
 const routes = './app/routes';
@@ -52,6 +60,7 @@ server.on('listening', onListening)
 //end server listening code
 
 const socketLib = require("./app/libs/socket");
+const passport = require('passport');
 const socketServer = socketLib.setServer(server);
 
 /**

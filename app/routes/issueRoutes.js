@@ -2,7 +2,12 @@ const express = require('express');
 const config = require('/home/sowmya/trackIt/trackItBackEnd/config/config');
 const auth = require('../middlewares/auth');
 const controller = require('../controllers/issue');
-const { base } = require('../models/comment');
+const multer = require('/home/sowmya/trackIt/trackItBackEnd/app/multer/multer')
+let connection = mongoose.createConnection(config.db.uri)
+let gfs = Grid(connection.db, mongoose.mongo)
+gfs.collection('uploads')
+const Grid = require('gridfs-stream');
+const passport = require('passport');
 
 module.exports.setRouter = (app) => {
 
@@ -46,5 +51,13 @@ module.exports.setRouter = (app) => {
 
     //app.get(`${baseUrl}/comments/:issueId/:userId`, auth.isAuthorized, controller.commentsOfUser);
 
+    app.post(`${baseUrl}/uploads`, multer.upload.single('file'), multer.uploadFile);
 
+    app.get(`${baseUrl}/allFiles`, multer.getAllFiles);
+
+    app.get(`${baseUrl}/file/:fileName`, multer.getSingleFile);
+
+    app.get(`${baseUrl}/downloadFile/:fileName`, multer.downloadFile);
+
+    app.post(`${baseUrl}/delete/:id`, multer.deleteFile);
 }
