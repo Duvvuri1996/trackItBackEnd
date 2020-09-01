@@ -4,7 +4,7 @@ const time = require('../app/libs/time');
 const GoogleStrategy = require('passport-google-oauth20');
 
 const User = require('../app/models/socialUserModel');
-const { deserializeUser } = require('passport');
+
 const logger = require('../app/libs/logger');
 const check = require('../app/libs/check');
 
@@ -12,12 +12,12 @@ passport.serializeUser((user, done) => {
     done(null, user.id)
 })
 
-passport.deserializeUser(deserializeUser((id, done) => {
+passport.deserializeUser((id, done) => {
     User.findById(id)
     .then(user => {
         done(null, user)
     })
-}))
+})
 
 passport.use(new GoogleStrategy({
     clientID : "548152252166-ib6vh2p329pur33nijhc1ms00ip9aual.apps.googleusercontent.com",

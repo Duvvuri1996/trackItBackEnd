@@ -1,4 +1,4 @@
-const logger = require('pino')
+const logger = require('pino')()
 const moment = require('moment')
 
 
@@ -14,19 +14,21 @@ let errorFunction = (message, origin, level) => {
     return error
 }
 
-let infoFunction = (message, origin, level) => {
+let captureInfo = (message, origin, level) => {
     let currentTime = moment()
-    let info = {
+    
+    let formattedInfo = {
         timeStamp : currentTime,
-        message : message, 
+        message : message,
         origin : origin,
         level : level
     }
-    logger.info(info)
-    return info
+    
+    logger.info(formattedInfo)
+    return formattedInfo
 }
 
 module.exports = {
     error : errorFunction,
-    info : infoFunction
+    info : captureInfo
 }

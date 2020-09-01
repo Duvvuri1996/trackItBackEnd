@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 let Watch = new Schema ({
-    watcherId : String,
+    watchId : String,
 
     issueId : String,
 

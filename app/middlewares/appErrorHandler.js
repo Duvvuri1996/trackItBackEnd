@@ -1,4 +1,4 @@
-const response = require('../libs/responseLib')
+const response = require('../libs/response')
 
 let errorHandler = (err, req, res, next) => {
     console.log("errorHandler called")

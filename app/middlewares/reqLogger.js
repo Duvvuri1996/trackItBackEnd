@@ -1,4 +1,4 @@
-const appConfig = require('../Configuration/appConfig')
+const appConfig = require('/home/sowmya/trackIt/trackItBackEnd/config/config')
 
 let reqRouteIpLogger = (req,res,next) => {
     let remoteIp = req.connection.remoteAddress + '://' + req.connection.remotePort

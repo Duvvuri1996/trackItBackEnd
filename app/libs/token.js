@@ -30,10 +30,12 @@ let generateJwt = (data,cb) => {
 } //end generate token
 
 let verifyToken = (token, secret,cb) => {
+    console.log(token)
+    console.log(secret)
     jwt.verify(token, secret, function(err,decoded) {
         if(err) {
             console.log("Token verification error")
-            console.log(err)
+            console.log(err)+ " is this"
             cb(err,null)
         } else {
             console.log("User verified")

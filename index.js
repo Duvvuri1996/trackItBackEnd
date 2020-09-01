@@ -4,31 +4,36 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const bodyParser = require('body-parser');
+const config = require('./config/config');
 const fs = require('fs');
 const http = require('http');
 const passportCon = require('./passport/passport');
+const passport = require('passport');
 const app = express();
-const config = require('./config/config');
 const logger = require('./app/libs/logger');
 const errorHandlerMiddleware = require('./app/middlewares/appErrorHandler');
 const reqLogger = require('./app/middlewares/reqLogger');
+const method = require('method-override');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(method('_method'));
 app.use(cookieParser());
+app.use(
+    cookieSession({
+    maxAge : 24*24*60*1000*30,
+    keys : ["newSecret"]
+}));
 app.use(reqLogger.logIp);
 app.use(errorHandlerMiddleware.errorHandler);
-app.use(errorHandlerMiddleware.notFoundHandler);
-app.use(cookieSession({
-    maxAge : 24*24*60*1000*30,
-    Keys : [abcdefghijkl]
-}));
+
+
 app.use(passport.initialize());
 app.use(passport.session());
 
 
-const models = './app/models';
-const routes = './app/routes';
+const models = '/home/sowmya/trackIt/trackItBackEnd/app/models';
+const routes = '/home/sowmya/trackIt/trackItBackEnd/app/routes';
 
 app.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -50,6 +55,7 @@ fs.readdirSync(routes).forEach(function (file) {
     }
 })
 
+app.use(errorHandlerMiddleware.notFoundHandler);
 /**
  * create http server
  */
@@ -60,7 +66,7 @@ server.on('listening', onListening)
 //end server listening code
 
 const socketLib = require("./app/libs/socket");
-const passport = require('passport');
+
 const socketServer = socketLib.setServer(server);
 
 /**
@@ -110,7 +116,6 @@ function onListening() {
     })
 }
 
-
 mongoose.connection.on('error', function (err) {
     console.log("Databse error")
     console.log(err)
@@ -129,4 +134,3 @@ mongoose.connection.on('open', function (err) {
 }) // end mongoose connection open handler
 
 module.exports = app;
-

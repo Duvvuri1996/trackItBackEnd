@@ -21,7 +21,7 @@ const response = require('../libs/response');
 
 let createIssue = (req, res) => {
     let today = new Date()
-    let newIssue = {
+    let newIssue = new issueModel({
         issueId : shortid.generate(),
         userId : req.body.userId,
         assigneeId : req.body.assigneeId,
@@ -29,9 +29,9 @@ let createIssue = (req, res) => {
         assigneeName : req.body.assigneeName,
         issueTitle : req.body.issueTitle,
         issueDescription : req.body.issueDescription,
-        image : req.body.image,
+        images : req.body.images.split(','),
         createdOn : today
-    }
+    })
     newIssue.save((err, result) => {
         if (err) {
             logger.error(err.message, "createIssue() function", 10)
@@ -63,19 +63,23 @@ let deleteIssue = (req, res) => {
 let editIssue = (req, res) => {
     let options = req.body
     issueModel.updateOne({ issueId : req.params.issueId}, options)
-    .exec((err, result) => {
+    .exec((err, details) => {
         if(err) {
             logger.error(err.message, "Error occured at editIssue() function", 10)
             let apiResponse = response.generate(true, "Unknown error occurred", 500, null)
             res.send(apiResponse)
-        } else if(check.isEmpty(result)) {
+        } else if(check.isEmpty(details)) {
             logger.error("No issue found to update", "Error occured at editIssue() function", 7)
             let apiResponse = response.generate(true, "No issue found to update", 404, null)
             res.send(apiResponse)
         } else {
-            result.modifiedOn = new Date()
+            details.modifiedOn = new Date()
+            delete details.n
+            delete details.nModified
+            delete details.ok
+
             logger.info("Issue updated successfully", "Success at editIssue() function", 10)
-            let apiResponse = response.generate(fasle, "Issue updated successfully", 200, result)
+            let apiResponse = response.generate(false, "Issue updated successfully", 200, details)
             res.send(apiResponse)
         }
     })
@@ -87,7 +91,7 @@ let getAllIssues = (req, res) => {
     .exec((err, allIssues) => {
         if(err) {
             logger.error(err.message, "Error occured at getAllIssues() function", 10)
-            let apiResponse = resposne.generate(true, "Unknown error occured", 500, null)
+            let apiResponse = response.generate(true, "Unknown error occured", 500, null)
             res.send(apiResponse)
         } else if(check.isEmpty(allIssues)) {
             logger.error("No issues found", "at getAllIssues() function", 7)
@@ -110,11 +114,11 @@ let singleIssue = (req, res) => {
             res.send(apiResponse)
         } else if(check.isEmpty(issueDetails)) {
             logger.error("issueDetails are empty", "error at singleIssue() function", 7)
-            let apiResposne = resposne.generate(true, "issueDetails are empty", 404, null)
+            let apiResponse = response.generate(true, "issueDetails are empty", 404, null)
             res.send(apiResponse)
         } else {
             logger.info("Issue found successfully", "at singleIssue() function", 10)
-            let apiResposne = response.generate(false, "Issue found successfully", 200, issueDetails)
+            let apiResponse = response.generate(false, "Issue found successfully", 200, issueDetails)
             res.send(apiResponse)
         }
     })
@@ -159,17 +163,21 @@ let getAllIssuesByassineeId = (req, res) => {
 }
 
 let watchIssue = (req, res) => {
-    let newWatch = {
+    let newWatch = new watcherModel({
+
         watchId : shortid.generate(),
         issueId : req.body.issueId,
         userId : req.body.userId
-    }
+    })
     newWatch.save((err, result) => {
         if(err) {
             logger.error(err.message, "Error occurred at watchIssue() function", 10)
             let apiResponse = response.generate(true, "Unknown error occured", 500, null)
             res.send(apiResponse)
         } else {
+            delete result._id
+            delete result.__v
+            console.log(result.watchId)
             logger.info("Successfully created watch", "at watchIssue() function", 10)
             let apiResponse = response.generate(false, "Successfully created watchIssue", 200, result)
             res.send(apiResponse)
@@ -193,22 +201,23 @@ let watchCount = (req, res) => {
 }
 
 let allWatchOfUser = (req, res) => {
-    watcherModel.userId({ userId : req.params.userId })
-    .exec((err, allDetails))
-    if(err) {
-        logger.error(err.message, "Error occurred at allWatchOfUser() function", 10)
-        let apiResponse = response.generate(true, "Unknown error occured", 500, null)
-        res.send(apiResponse)
-    }
-    else if(check.isEmpty(allDetails)) {
-        logger.error("allDetails are empty", "at getAllIssuesByassineeId() function",7)
-        let apiResponse = response.generate(true, "issueDetails are empty", 404, null)
-        res.send(apiResponse)
-    } else {
-        logger.info("All details found", "at allWatchOfUser() function", 10)
-        let apiResponse = response.generate(false, "All details found", 200, allDetails)
-        res.send(apiResponse)
-    }
+    watcherModel.find({ userId : req.params.userId })
+    .exec((err, allDetails) => {
+        if(err) {
+            logger.error(err.message, "Error occurred at allWatchOfUser() function", 10)
+            let apiResponse = response.generate(true, "Unknown error occured", 500, null)
+            res.send(apiResponse)
+        }
+        else if(check.isEmpty(allDetails)) {
+            logger.error("allDetails are empty", "at getAllIssuesByassineeId() function",7)
+            let apiResponse = response.generate(true, "issueDetails are empty", 404, null)
+            res.send(apiResponse)
+        } else {
+            logger.info("All details found", "at allWatchOfUser() function", 10)
+            let apiResponse = response.generate(false, "All details found", 200, allDetails)
+            res.send(apiResponse)
+        }
+    })   
 }
 
 let searchIssue = (req, res) => {
@@ -218,26 +227,26 @@ let searchIssue = (req, res) => {
             let apiResponse = response.generate(true, "Unknown error occured", 500, null)
             res.send(apiResponse)
         } else if(check.isEmpty(docs)) {
-            logger.error("docs are empty", "at searchIssue() function", 7)
-            let apiResponse = response.generate(true, "docs are empty", 404, null)
+            logger.error("No results found", "at searchIssue() function", 7)
+            let apiResponse = response.generate(true, "No results found", 404, null)
             res.send(apiResponse)
         } else {
             logger.info("Docs found", "at searchIssue() function", 10)
-            let apiResposne = response.generate(false, "Docs found", 200, docs)
+            let apiResponse = response.generate(false, "Docs found", 200, docs)
             res.send(apiResponse)
         }
     })
 }
 
 let createComment = (req, res) => {
-    let newComment = {
+    let newComment = new commentModel({
         commentId : shortid.generate(),
         reporterId : req.body.reporterId,
         reporterName : req.body.reporterName,
         issueId : req.body.issueId,
         comment : req.body.comment,
         createdOn : timeLib.now()
-    }
+    })
     newComment.save((err, result) => {
         if(err) {
             logger.error(err.message, "Error occured at createComment() function", 10)
@@ -245,7 +254,7 @@ let createComment = (req, res) => {
             res.send(apiResponse)
         } else {
             logger.info("Comment created successfully", "at createComment() function", 10)
-            let apiResposne = response.generate(false, "Comment created successfullu", 200, result)
+            let apiResponse = response.generate(false, "Comment created successfully", 200, result)
             res.send(apiResponse)
         }
     })
@@ -259,7 +268,8 @@ let editComment = (req, res) => {
             let apiResponse = response.generate(true, "Unknown error occured in finding comment", 500, null)
             res.send(apiResponse)
         } else {
-            commentModel.updateOne({ comment : req.body.comment })
+            if(req.body.comment){
+                commentModel.updateOne({ comment : req.body.comment })
             .exec((err, result) => {
                 if(err) {
                     logger.error(err.message, "Error occured at editComment() function", 7)
@@ -271,6 +281,11 @@ let editComment = (req, res) => {
                     res.send(apiResponse)
                 }
             })
+            } else {
+                let apiResponse = response.generate(true, "Cannot edit other than comment section", 500, null)
+                res.send(apiResponse)
+            }
+            
         }
     })
 }
@@ -291,7 +306,7 @@ let deleteComment = (req, res) => {
 }
 
 let getAllComments = (req, res) => {
-    commentId.find({ issueId : req.params.issueId })
+    commentModel.find({ issueId : req.params.issueId })
     .exec((err, commentDetails) => {
         if(err) {
             logger.error(err.message, "Error occured at getAllComments() function", 7)
@@ -324,7 +339,7 @@ let numOfDays = (req, res) => {
                 }
                 if(date2.getDate() > date1.getDate()){
                     let numDays = diff(date1, date2)
-                    let apiResponse = response.generate(false, "NumDays", 200, numDays)
+                    let apiResponse = response.generate(false, "NumDays in days", 200, numDays)
                     res.send(apiResponse)
                     
                 } else {
@@ -332,12 +347,12 @@ let numOfDays = (req, res) => {
                     let hours2 = date2.getHours()
                     if(hours2 > hours1){
                         let numDays = (hours2-hours1)+1
-                        let apiResponse = response.generate(false, "NumDays", 200, numDays)
+                        let apiResponse = response.generate(false, "NumDays in hours", 200, numDays)
                         res.send(apiResponse)
                     } else {
                         let minutes1 = date1.getMinutes()
                         let minutes2 = date2.getMinutes()
-                        let apiResponse = response.generate(false, "NumDays", 200, numDays)
+                        let apiResponse = response.generate(false, "NumDays in minutes", 200, numDays)
                         res.send(apiResponse)
                     }
 
@@ -349,4 +364,23 @@ let numOfDays = (req, res) => {
             }
         }
     })
+}
+
+module.exports = {
+    createIssue : createIssue,
+    deleteIssue : deleteIssue,
+    editIssue : editIssue,
+    getAllIssues : getAllIssues,
+    singleIssue : singleIssue,
+    getAllIssuesByuserId : getAllIssuesByuserId,
+    getAllIssuesByassineeId : getAllIssuesByassineeId,   
+    watchIssue : watchIssue,
+    watchCount : watchCount,
+    allWatchOfUser : allWatchOfUser,
+    searchIssue : searchIssue,
+    createComment : createComment,
+    deleteComment : deleteComment,
+    editComment : editComment,
+    getAllComments : getAllComments,
+    numOfDays : numOfDays   
 }

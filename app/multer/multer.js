@@ -8,9 +8,14 @@ const GridFsStorage = require('multer-gridfs-storage');
 const Grid = require('gridfs-stream');
 const multer = require('multer');
 
-let connection = mongoose.createConnection(config.db.uri)
-let gfs = Grid(connection.db, mongoose.mongo)
-gfs.collection('uploads')
+let connection = mongoose.createConnection((config.db.uri),{ useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true })
+let gfs
+connection.once('open', function() {
+    gfs = Grid(connection.db, mongoose.mongo)
+    gfs.collection('uploads')
+})
 
 const storage = new GridFsStorage({
     url : config.db.uri,
@@ -34,7 +39,7 @@ const storage = new GridFsStorage({
     }
 })
 
-const upload = multer({ storage })
+let upload = multer({ storage })
 
 let uploadFile = (req, res) => {
     logger.info("File uploaded successfully", "at uploadeFile() function", 10)
@@ -99,6 +104,7 @@ let deleteFile = (req, res) => {
 }
 
 module.exports = {
+    upload : upload,
     uploadFile : uploadFile,
     getAllFiles : getAllFiles,
     getSingleFile :getSingleFile,

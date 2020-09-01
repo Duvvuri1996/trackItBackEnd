@@ -26,7 +26,7 @@ let Issue = new Schema ({
         type : String,
         default: ''
     },
-    image : [],
+    images : [],
 
     createdOn : {
         type :Date,
@@ -43,6 +43,6 @@ let Issue = new Schema ({
     }
 
 })
-User.index({ '$**' : 'text' })
+Issue.index({ '$**' : 'text' });
 
 module.exports = mongoose.model('Issue', Issue)

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+const appConfig = require('/home/sowmya/trackIt/trackItBackEnd/config/config')
 const shortid = require('shortid');
 const authModel = require('../models/authModel');
 const userModel = require('../models/userModel');
@@ -13,29 +13,35 @@ const check = require('../libs/check');
 const time = require('../libs/time');
 const mail = require('../libs/mail');
 const nodemailer = require('nodemailer')
+const response = require('/home/sowmya/trackIt/trackItBackEnd/app/libs/response');
+const { update } = require('../models/authModel');
 
 let signUpUser = (req,res) => {
 
     let validateParams = () => {
+        console.log('validateParams called')
         return new Promise((resolve, reject) => {
-            if(req.body.userEmail) {
-                if(!paramsLib.email(req.body.userEmail)) {
-                    logger.error("Email does not meet the requirements", "Signup function", 10)
-                    let apiResponse = response.generate(true, 'Email does not meet the requirement',400, null)
+            if (req.body.userEmail) {
+                if (!paramsLib.Email(req.body.userEmail)) {
+                    let apiResponse = response.generate(true, "Email does not met the requirement", 400, null)
                     reject(apiResponse)
-                } else if(check.isEmpty(req.body.userEmail) || check.isEmpty(req.body.userPassword)) {
-                    logger.error("Password/Email parameter(s) missing", "Signup function", 7)
-                    let apiResponse = response.generate(true, "Password/Email parameter(s) missing", 404, null)
+                    console.log(apiResponse)
+                } else if (check.isEmpty(req.body.userPassword)) {
+                    let apiResponse = response.generate(true, "Password missing", 400, null)
                     reject(apiResponse)
                 } else {
                     resolve(req)
                 }
-
+            } else {
+                let apiResponse = response.generate(true, "Onr or more parameter(s) missing in the field", 400, null)
+                reject(apiResponse)
             }
+
         })
-    } //end of validateParams function in signup function
+    }  //end of validateParams function in signup function
 
     let createUser = () => {
+        console.log('createUSer called')
         return new Promise((resolve, reject) => {
             userModel.findOne({userEmail : req.body.userEmail})
             .exec((err, userDetails) => {
@@ -44,16 +50,16 @@ let signUpUser = (req,res) => {
                     let apiResponse = response.generate(err, "Error occured in finding user", 404, null)
                     reject(apiResponse)
                 } else if(check.isEmpty(userDetails)) {
-                    let newUser = {
+                    let newUser = new userModel({
                         userId : shortid.generate(),
                         firstName : req.body.firstName,
                         lastName : req.body.lastName,
-                        fullName : `${firstName} ${lastName}`,
+                        fullName : `${req.body.firstName} ${req.body.lastName}`,
                         userEmail : req.body.userEmail,
                         userPassword : passwordLib.hashPassword(req.body.userPassword),
                         mobileNumber : req.body.mobileNumber,
                         country : req.body.country
-                    }
+                    })
                     newUser.save((err, user) => {
                         if(err) {
                             logger.error(err, "createUser() in signup function", 5)
@@ -71,10 +77,11 @@ let signUpUser = (req,res) => {
                     reject(apiResponse)
                 }
             })
-        })
+        })  
     }
 
     let generateToken = (userDetailsObj) => {
+        console.log('generateToken called')
         return new Promise((resolve, reject) => {
             tokenLib.generateJwt(userDetailsObj, (err, tokenDetails) => {
                 if(err) {
@@ -92,6 +99,7 @@ let signUpUser = (req,res) => {
     }
 
     let saveToken = (tokenDetails) => {
+        console.log(tokenDetails.userId+" is userId")
         return new Promise((resolve, reject) => {
             authModel.findOne({ userId : tokenDetails.userId})
             .exec((err, foundTokenDetails) => {
@@ -100,12 +108,12 @@ let signUpUser = (req,res) => {
                     let apiResponse = response.generate(true, "Failed to find token details", null)
                     reject(apiResponse)
                 } else if(check.isEmpty(foundTokenDetails)) {
-                    let newAuthToken = {
-                        userId : foundTokenDetails.userId,
-                        authToken : foundTokenDetails.token,
-                        tokenSecret : foundTokenDetails.tokenSecret,
+                    let newAuthToken = new authModel({
+                        userId : tokenDetails.userId,
+                        authToken : tokenDetails.token,
+                        tokenSecret : tokenDetails.tokenSecret,
                         tokenGenertionTime : time.now()
-                    }
+                    })
                     newAuthToken.save((err, newTokenDetails) => {
                         if(err) {
                             logger.error(err, "saveToken() in signup()", 7)
@@ -115,8 +123,9 @@ let signUpUser = (req,res) => {
                             logger.info("Token saved successfully", "saveToken() in singup()", 10)
                             let responseBody = {
                                 authToken : newTokenDetails.authToken,
-                                userDetails : foundTokenDetails.userDetails
+                                userDetails : tokenDetails.userDetails
                             }
+                            console.log(responseBody)
                             resolve(responseBody)
                         }
                     })
@@ -136,6 +145,7 @@ let signUpUser = (req,res) => {
                                 authToken : newTokenDetails.authToken,
                                 userDetails : foundTokenDetails.userDetails
                             }
+                            console.log(responseBody)
                             resolve(responseBody)
                         }
                     })
@@ -145,7 +155,6 @@ let signUpUser = (req,res) => {
     } //saveToken() end
 
     validateParams(req, res)
-    .then(validateParams)
     .then(createUser)
     .then(generateToken)
     .then(saveToken)
@@ -178,7 +187,7 @@ let signInUser = (req, res) => {
                             let apiResponse = response.generate(true, "No user Found", 404, null)
                             reject(apiResponse)
                         } else {
-                            logger.info('User Found', 'userController: findUser()')
+                            logger.info('User Found', 'userController: findUser()', 10)
                             resolve(userDetails)
                         }
                     })
@@ -190,25 +199,25 @@ let signInUser = (req, res) => {
         })
     } //end findUser function
 
-    let validatePasswordInput = (retrievedUserDetails) => {
+    let validatePasswordInput = (userDetails) => {
         //console.log(retrievedUserDetails + 'retrievedUserDetails is called')
-        //console.log(req.body.password + 'is called')
+        console.log(userDetails)
         //console.log("validatePasswordInput is called")
         return new Promise((resolve, reject) => {
-            passwordLib.comparePassword(req.body.userPassword, retrievedUserDetails.userPassword, (err, isMatch) => {
+            passwordLib.comparePassword(req.body.userPassword, userDetails.userPassword, (err, isMatch) => {
                 if (err) {
                     let apiResponse = response.generate(true, "Login failed", 500, null)
                     reject(apiResponse)
                 } else if (isMatch) {
-                    let userDetails = retrievedUserDetails.toObject()
-                    delete userDetails.userPassword
-                    delete userDetails._id
-                    delete userDetails._v
-                    delete userDetails.createdOn
-                    delete userDetails.modifiedOn
-                    resolve(userDetails)
+                    let founduserDetails = userDetails.toObject()
+                    delete founduserDetails.userPassword
+                    delete founduserDetails._id
+                    delete founduserDetails._v
+                    delete founduserDetails.createdOn
+                    delete founduserDetails.modifiedOn
+                    resolve(founduserDetails)
                 } else {
-                    logger.info('Login Failed Due To Invalid Password', 'userController: validatePasswordInput')
+                    logger.error('Login Failed Due To Invalid Password', 'userController: validatePasswordInput')
                     let apiResponse = response.generate(true, "Invalid login password", 400, null)
                     reject(apiResponse)
                 }
@@ -216,18 +225,18 @@ let signInUser = (req, res) => {
         })
     } //end validatePasswordInput function
 
-    let generateToken = (userDetails) => {
-        //console.log("Generate token is called")
+    let generateToken = (founduserDetails) => {
+        console.log("Generate token is called")
         return new Promise((resolve, reject) => {
-            token.generateJwt(userDetails, (err, tokenDetails) => {
+            tokenLib.generateJwt(founduserDetails, (err, tokenDetails) => {
                 if (err) {
                     logger.error("Failed to generate token", "generateToken()", 10)
                     let apiResponse = response.generate(true, "Failed to generate token", 500, null)
                     reject(apiResponse)
                 } else {
-                    logger.info("Successfull", "generateToken()")
-                    tokenDetails.userId = userDetails.userId;
-                    tokenDetails.userDetails = userDetails;
+                    logger.info("Successfull", "generateToken()", 10)
+                    tokenDetails.userId = founduserDetails.userId;
+                    tokenDetails.userDetails = founduserDetails;
                     resolve(tokenDetails)
                 }
             })
@@ -309,6 +318,7 @@ let signInUser = (req, res) => {
 
 //start logout function
 let logout = (req, res) => {
+    console.log(req.user)
     authModel.findOneAndRemove({
         userId: req.user.userId
     }, (err, userDetails) => {
@@ -323,7 +333,6 @@ let logout = (req, res) => {
         } else {
             let apiResponse = response.generate(false, 'Logged Out Successfully', 200, null)
             res.send(apiResponse)
-            userDetails.onlineStatus = "offline"
         }
     })
 } //end logout function
@@ -350,6 +359,7 @@ let recoveryMail = (req,res) => {
     }
 
     let generateRecoveryToken = (userDetails) => {
+        //console.log(userDetails)
         return new Promise((resolve, reject) => {
             tokenLib.generateJwt(userDetails, (err, tokenDetails) => {
                 if (err) {
@@ -359,15 +369,28 @@ let recoveryMail = (req,res) => {
                 } else {
                     tokenDetails.userId = userDetails.userId
                     tokenDetails.userDetails = userDetails
+                    resolve(tokenDetails)
+                }
+            })
+        })
+    }
+    let setRecoveryToken = (tokenDetails) => {
+        return new Promise((resolve, reject) => {
+            userModel.findOne({ userEmail : req.body.userEmail }, (err, userDetails) => {
+                if(err) {
+                    logger.error(err.message, "setRecoveryToken() function", 10)
+                    let apiResponse = response.generate(true, "Unknown error at setRecoveryToken()", 500, null)
+                    reject(apiResponse)
+                } else {
                     userDetails.recoveryToken = tokenDetails.token
                     userDetails.save((err, updatedDetails) => {
-                        if(err) {
-                            logger.error(err, "generateRecoveryToken() in recoveryMail()", 3)
-                            let apiResponse = response.generate(true, "Failed to save userDetails", 500, null)
+                        if(err){
+                            logger.error(err, "Error at setRecoveryToken()", 7)
+                            let apiResponse = response.generate(true, "Unable to save token", 500, null)
                             reject(apiResponse)
                         } else {
-                            console.log(updatedDetails.recoveryToken)
                             resolve(updatedDetails)
+                            console.log(updatedDetails)
                         }
                     })
                 }
@@ -376,20 +399,31 @@ let recoveryMail = (req,res) => {
     }
 
     let sendMail = (updatedDetails) => {
+        console.log('updated details in sendMail() is '+updatedDetails)
+        console.log(updatedDetails.recoveryToken)
         return new Promise((resolve, reject) => {
-            let transporter = mail.transporter
-            let mailOptions = mail.sendMail(updatedDetails)
-            mailOptions.subject = "Reset Password"
-            mailOptions.html = `<h4>Hi ${userDetails.fullName}<h4>
-            <p>You are receiving this because you have requested the reset of the password for your account.<br>
-                <br>'Please click on the following link to complete the process.'<br>
-                <br> <a href="http://localhost:4200/resetpassword/${userDetails.recoveryToken}">Reset Password</a>
-            </p>
-            <p>
-            <br>If You have'nt initiated this request please ignore<br>
-            <br>Thank you<br>
-            </p>`
-            console.log(mailOptions)
+            let transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: appConfig.mailer.user,
+                    pass: appConfig.mailer.pass
+                }
+            })
+            let mailOptions = {
+                from: appConfig.mailer.user,
+                to: updatedDetails.userEmail,
+                subject: 'Reset password',
+                html: `<h4>Hi ${updatedDetails.fullName}<h4>
+                    <p>You are receiving this because you have requested the reset of the password for your account.<br>
+                        <br>'Please click on the following link to complete the process.'<br>
+                        <br> <a href="http://localhost:4200/resetpassword/${updatedDetails.recoveryToken}">Reset Password</a>
+                    </p>
+                    <p>
+                    <br>If You have'nt initiated this request please ignore<br>
+                    <br>Thank you<br>
+                    </p>`
+            }
+            console.log("mailoptions are "+mailOptions)
             transporter.sendMail(mailOptions, (err, info) => {
                 if(err) {
                     logger.error(err, "sendMail() in recoveryMail()", 10)
@@ -404,6 +438,7 @@ let recoveryMail = (req,res) => {
 
     findUser(req,res)
     .then(generateRecoveryToken)
+    .then(setRecoveryToken)
     .then(sendMail)
     .then((resolve) => {
         let apiResponse = response.generate(false, "Mail sent successfully", 200, resolve)
@@ -450,7 +485,7 @@ let resetPassword = (req, res) => {
     let updateResetPassword = (userTokenDetails) => {
         return new Promise((resolve, reject) => {
             let options = {
-                password: passwordLib.hashPassword(req.body.password),
+                userPassword: passwordLib.hashPassword(req.body.userPassword),
                 recoveryToken:'Null'
             }
             userModel.update({ 'userId': userTokenDetails.userId }, options).exec((err, result) => {
@@ -460,7 +495,7 @@ let resetPassword = (req, res) => {
                     let apiResponse = response.generate(true, 'Failed To reset user Password', 500, null)
                     reject(apiResponse)
                 } else if (check.isEmpty(result)) {
-                    logger.info('No User Found with given Details', 'updateResetPassword function')
+                    logger.error('No User Found with given Details', 'updateResetPassword function', 7)
                     let apiResponse = response.generate(true, 'No User Found', 404, null)
                     reject(apiResponse)
                 } else {
@@ -492,7 +527,7 @@ let getAllUsers = (req, res) => {
                 let apiResponse = response.generate(true, "Failed to find user", 404, null)
                 res.send(apiResponse)
         } else if(check.isEmpty(result)) {
-            logger.info('No user Found', 'getAllUser')
+            logger.error('No user Found', 'getAllUser', 7)
                 let apiResponse = response.generate(true, "No user found", 500, null)
                 res.send(apiResponse)
         } else {
@@ -510,7 +545,7 @@ let getAllUsersCount = (req, res) => {
             let apiResponse = response.generate(true, "Failed to retrieve users data", 404, null)
             res.send(apiResponse)
         } else if(check.isEmpty(result)) {
-            logger.info('No user found', 'getAllUsersCount() function')
+            logger.error('No user found', 'getAllUsersCount() function', 7)
             let apiResponse = response.generate(true, "No user found", 500, null)
             res.send(apiResponse)
         } else {

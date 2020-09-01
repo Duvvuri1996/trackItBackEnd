@@ -1,13 +1,17 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const config = require('/home/sowmya/trackIt/trackItBackEnd/config/config');
 const auth = require('../middlewares/auth');
-const controller = require('../controllers/issue');
+const controller = require('/home/sowmya/trackIt/trackItBackEnd/app/controllers/issue');
 const multer = require('/home/sowmya/trackIt/trackItBackEnd/app/multer/multer')
-let connection = mongoose.createConnection(config.db.uri)
-let gfs = Grid(connection.db, mongoose.mongo)
-gfs.collection('uploads')
 const Grid = require('gridfs-stream');
 const passport = require('passport');
+let connection = mongoose.createConnection(config.db.uri)
+let gfs
+connection.once('open', function() {
+    gfs = Grid(connection.db, mongoose.mongo)
+    gfs.collection('uploads')
+})
 
 module.exports.setRouter = (app) => {
 
@@ -41,13 +45,13 @@ module.exports.setRouter = (app) => {
 
     app.put(`${baseUrl}/editcomment/:commentId`, auth.isAuthorized, controller.editComment);
 
-    app.put(`${baseUrl}/deletecomment/:commentId`, auth.isAuthorized, controller.deleteComment);
+    app.post(`${baseUrl}/deletecomment/:commentId`, auth.isAuthorized, controller.deleteComment);
 
     app.get(`${baseUrl}/comments/:issueId`, auth.isAuthorized, controller.getAllComments);
 
     //app.get(`${baseUrl}/:eventId/status`, auth.isAuthorized, controller.status);
 
-    app.get(`${baseUrl}/numOfDays`, auth.isAuthorized, controller.numOfDays);
+    app.post(`${baseUrl}/numOfDays`, auth.isAuthorized, controller.numOfDays);
 
     //app.get(`${baseUrl}/comments/:issueId/:userId`, auth.isAuthorized, controller.commentsOfUser);
 
