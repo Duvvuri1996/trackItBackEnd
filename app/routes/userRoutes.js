@@ -16,15 +16,15 @@ module.exports.setRouter = (app) => {
 
     app.post(`${baseUrl}/recoverymail`, controller.recoveryMail);
 
-    app.post(`${baseUrl}/logout`,auth.isAuthorized ,controller.logout);
+    app.post(`${baseUrl}/logout`,auth.isAuthorized, controller.logout);
 
-    app.get(`${baseUrl}/allusers`, auth.isAuthorized, controller.getAllUsers);
+    app.get(`${baseUrl}/allusers`, controller.getAllUsers);
 
-    app.get(`${baseUrl}/alluserscount`, auth.isAuthorized, controller.getAllUsersCount);
+    app.get(`${baseUrl}/alluserscount`, controller.getAllUsersCount);
 
-    app.get(`${baseUrl}/singleuser/:userId`, auth.isAuthorized, controller.singleUser);
+    app.get(`${baseUrl}/singleuser/:userId`, controller.singleUser);
 
-    app.get(`${baseUrl}/allSocialUsers`, auth.isAuthorized, controller.SocialUsers);
+    app.get(`${baseUrl}/allSocialUsers`, controller.SocialUsers);
 
     app.get('/auth/google/', passport.authenticate('google', { scope: ['profile', 'email']}));
 

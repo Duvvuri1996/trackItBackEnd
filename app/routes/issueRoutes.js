@@ -17,43 +17,43 @@ module.exports.setRouter = (app) => {
 
     let baseUrl = `${config.apiVersion}/issue`
 
-    app.post(`${baseUrl}/create`, auth.isAuthorized, controller.createIssue);
+    app.post(`${baseUrl}/create`, controller.createIssue);
 
-    app.post(`${baseUrl}/delete/:issueId`, auth.isAuthorized, controller.deleteIssue);
+    app.post(`${baseUrl}/delete/:issueId`, controller.deleteIssue);
 
-    app.put(`${baseUrl}/edit/:issueId`, auth.isAuthorized, controller.editIssue);
+    app.put(`${baseUrl}/edit/:issueId`, controller.editIssue);
 
-    app.get(`${baseUrl}/allIssues`, auth.isAuthorized, controller.getAllIssues);
+    app.get(`${baseUrl}/allIssues`, controller.getAllIssues);
 
-    app.get(`${baseUrl}/:issueId`, auth.isAuthorized, controller.singleIssue);
+    app.get(`${baseUrl}/:issueId`, controller.singleIssue);
 
-    app.get(`${baseUrl}/:userId`, auth.isAuthorized, controller.getAllIssuesByuserId);
+    app.get(`${baseUrl}/userid/:userId`, controller.getAllIssuesByuserId);
 
-    app.get(`${baseUrl}/:assigneeId`, auth.isAuthorized, controller.getAllIssuesByassineeId);
+    app.get(`${baseUrl}/assigneeid/:assigneeId`, controller.getAllIssuesByassineeId);
 
-    app.post(`${baseUrl}/watch`, auth.isAuthorized, controller.watchIssue);
+    app.post(`${baseUrl}/watch`, controller.watchIssue);
 
-    app.get(`${baseUrl}/watchcount/:issueId`, auth.isAuthorized, controller.watchCount);
+    app.get(`${baseUrl}/watchcount/:issueId`, controller.watchCount);
 
-    app.get(`${baseUrl}/watchofuser/:userId`, auth.isAuthorized, controller.allWatchOfUser);
+    app.get(`${baseUrl}/watchofuser/:userId`, controller.allWatchOfUser);
 
-    //app.post(`${baseUrl}/assignee/:issueId`, auth.isAuthorized, controller.addAssignee);
+    //app.post(`${baseUrl}/assignee/:issueId`, controller.addAssignee);
 
-    app.post(`${baseUrl}/search`, auth.isAuthorized, controller.searchIssue);
+    app.post(`${baseUrl}/search`, controller.searchIssue);
 
-    app.post(`${baseUrl}/createcomment`, auth.isAuthorized, controller.createComment);
+    app.post(`${baseUrl}/createcomment`, controller.createComment);
 
-    app.put(`${baseUrl}/editcomment/:commentId`, auth.isAuthorized, controller.editComment);
+    app.put(`${baseUrl}/editcomment/:commentId`, controller.editComment);
 
-    app.post(`${baseUrl}/deletecomment/:commentId`, auth.isAuthorized, controller.deleteComment);
+    app.post(`${baseUrl}/deletecomment/:commentId`, controller.deleteComment);
 
-    app.get(`${baseUrl}/comments/:issueId`, auth.isAuthorized, controller.getAllComments);
+    app.get(`${baseUrl}/comments/:issueId`, controller.getAllComments);
 
-    //app.get(`${baseUrl}/:eventId/status`, auth.isAuthorized, controller.status);
+    //app.get(`${baseUrl}/:eventId/status`, controller.status);
 
-    app.post(`${baseUrl}/numOfDays`, auth.isAuthorized, controller.numOfDays);
+    app.post(`${baseUrl}/numOfDays`, controller.numOfDays);
 
-    //app.get(`${baseUrl}/comments/:issueId/:userId`, auth.isAuthorized, controller.commentsOfUser);
+    //app.get(`${baseUrl}/comments/:issueId/:userId`, controller.commentsOfUser);
 
     app.post(`${baseUrl}/uploads`, multer.upload.single('file'), multer.uploadFile);
 

@@ -17,7 +17,7 @@ const time = require('../libs/time');
 const mail = require('../libs/mail');
 const nodemailer = require('nodemailer');
 const response = require('../libs/response');
-
+let userWatchDetails = [];
 
 let createIssue = (req, res) => {
     let today = new Date()
@@ -164,10 +164,8 @@ let getAllIssuesByassineeId = (req, res) => {
 
 let watchIssue = (req, res) => {
     let newWatch = new watcherModel({
-
-        watchId : shortid.generate(),
         issueId : req.body.issueId,
-        userId : req.body.userId
+        watchId : req.body.watchId
     })
     newWatch.save((err, result) => {
         if(err) {
@@ -201,7 +199,7 @@ let watchCount = (req, res) => {
 }
 
 let allWatchOfUser = (req, res) => {
-    watcherModel.find({ userId : req.params.userId })
+    watcherModel.find({ userId : req.params.watchId })
     .exec((err, allDetails) => {
         if(err) {
             logger.error(err.message, "Error occurred at allWatchOfUser() function", 10)
@@ -213,11 +211,21 @@ let allWatchOfUser = (req, res) => {
             let apiResponse = response.generate(true, "issueDetails are empty", 404, null)
             res.send(apiResponse)
         } else {
+            for(let x of allDetails){
+                issueModel.findOne({issueId : x.issueId}, (err, details) => {
+                    if(err){
+                        logger.error(err.message, "Failed to find", 4)
+                    } else {
+                        userWatchDetails.push(x)
+                    }
+                })
+            }
+            console.log(userWatchDetails)
             logger.info("All details found", "at allWatchOfUser() function", 10)
-            let apiResponse = response.generate(false, "All details found", 200, allDetails)
+            let apiResponse = response.generate(false, "All details found", 200, userWatchDetails)
             res.send(apiResponse)
         }
-    })   
+    })
 }
 
 let searchIssue = (req, res) => {
@@ -352,6 +360,7 @@ let numOfDays = (req, res) => {
                     } else {
                         let minutes1 = date1.getMinutes()
                         let minutes2 = date2.getMinutes()
+                        let numDays = minutes2-minutes1
                         let apiResponse = response.generate(false, "NumDays in minutes", 200, numDays)
                         res.send(apiResponse)
                     }
