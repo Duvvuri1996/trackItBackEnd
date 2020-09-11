@@ -488,7 +488,7 @@ let resetPassword = (req, res) => {
                 userPassword: passwordLib.hashPassword(req.body.userPassword),
                 recoveryToken:'Null'
             }
-            userModel.update({ 'userId': userTokenDetails.userId }, options).exec((err, result) => {
+            userModel.updateOne({ 'userId': userTokenDetails.userId }, options).exec((err, result) => {
                 if (err) {
                     console.log(err)
                     logger.error(err.message, 'updateResetPassword function', 10)

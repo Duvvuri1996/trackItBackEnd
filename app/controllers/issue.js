@@ -31,7 +31,7 @@ let createIssue = (req, res) => {
         issueDescription : req.body.issueDescription,
         images : req.body.images.split(','),
         status : req.body.status,
-        createdOn : today
+        createdOn : new Date()
     })
     newIssue.save((err, result) => {
         if (err) {
@@ -340,6 +340,8 @@ let numOfDays = (req, res) => {
             let apiResponse = response.generate(true, "Unknown error occured", 500, null)
             res.send(apiResponse)
         }else {
+            console.log(details+" not")
+            //console.log(details.createdOn)
             if(details.createdOn) {
                 let date1 = details.createdOn
                 let date2 = new Date()
