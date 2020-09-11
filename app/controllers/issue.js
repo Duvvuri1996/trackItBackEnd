@@ -30,6 +30,7 @@ let createIssue = (req, res) => {
         issueTitle : req.body.issueTitle,
         issueDescription : req.body.issueDescription,
         images : req.body.images.split(','),
+        status : req.body.status,
         createdOn : today
     })
     newIssue.save((err, result) => {
