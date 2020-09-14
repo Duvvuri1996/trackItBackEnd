@@ -2,9 +2,9 @@ const mongoose = require('mongoose');
 
 const shortid = require('shortid');
 const authModel = require('../models/authModel');
-const userModel = require('../models/userModel');
+const userModel = mongoose.model('User')
 const socialModel = require('../models/socialUserModel');
-const issueModel = require('../models/issueModel');
+const issueModel = mongoose.model('Issue');
 const commentModel = require('../models/comment');
 const watcherModel = require('../models/watcher');
 const paramsLib = require('../libs/params');
@@ -17,6 +17,7 @@ const time = require('../libs/time');
 const mail = require('../libs/mail');
 const nodemailer = require('nodemailer');
 const response = require('../libs/response');
+const notification = require('../models/notification');
 let userWatchDetails = [];
 
 let createIssue = (req, res) => {
@@ -29,16 +30,40 @@ let createIssue = (req, res) => {
         assigneeName : req.body.assigneeName,
         issueTitle : req.body.issueTitle,
         issueDescription : req.body.issueDescription,
-        images : req.body.images.split(','),
+        
         status : req.body.status,
-        createdOn : new Date()
+        createdOn : new Date(),
     })
+    if(req.body.images) {
+        newIssue.images = req.body.images.split(',')
+    } else {
+        newIssue.images = []
+    }
+//    newIssue.total_count += 1
     newIssue.save((err, result) => {
         if (err) {
             logger.error(err.message, "createIssue() function", 10)
             let apiResponse = response.generate(true, "Failed to create event", 404, null)
             res.send(apiResponse)
         } else {
+            let data = new notification({
+                issueId : result.issueId,
+                notificationDescription : "Your Issue has been created successfully",
+                userId : result.userId,
+                createdOn : time.now()
+            })
+            data.notificationCount = 1
+            data.save()
+            console.log(data)
+            let data1 = new notification({
+                issueId : result.issueId,
+                notificationDescription : `Hey ${result.assigneeName}, new issues has been assigned to you by ${result.userName}`,
+                userId : result.assigneeId,
+                creatodOn : time.now()
+            })
+            data.notificationCount = 1
+            data1.save()
+            console.log(data1)
            logger.info("Issue created successfully", "createIssue() function", 10)
            let apiResponse = response.generate(false, "Issue creeated succesfully", 200, result)
            res.send(apiResponse)
@@ -79,6 +104,13 @@ let editIssue = (req, res) => {
             delete details.nModified
             delete details.ok
 
+            let options = {
+                $push:{
+                    notificationDescription : "Someone edited the issue following by you"
+                }
+            }
+            options.notificationCount = 1
+            notification.updateMany({ issueId : req.params.issueId }, options)
             logger.info("Issue updated successfully", "Success at editIssue() function", 10)
             let apiResponse = response.generate(false, "Issue updated successfully", 200, details)
             res.send(apiResponse)
@@ -113,14 +145,17 @@ let singleIssue = (req, res) => {
             logger.error(err.message, "Error occurred at singleIssue() function", 10)
             let apiResponse = resposne.generate(true, "Unknown error occured", 500, null)
             res.send(apiResponse)
+            console.log('getAllIssuesCount in  singleissue')
         } else if(check.isEmpty(issueDetails)) {
             logger.error("issueDetails are empty", "error at singleIssue() function", 7)
             let apiResponse = response.generate(true, "issueDetails are empty", 404, null)
             res.send(apiResponse)
+            console.log('getAllIssuesCount in  singleissue')
         } else {
             logger.info("Issue found successfully", "at singleIssue() function", 10)
             let apiResponse = response.generate(false, "Issue found successfully", 200, issueDetails)
             res.send(apiResponse)
+            console.log('getAllIssuesCount in  singleissue')
         }
     })
 }
@@ -177,6 +212,14 @@ let watchIssue = (req, res) => {
             delete result._id
             delete result.__v
             console.log(result.watchId)
+            let data = new notification({
+                issueId : result.issueId,
+                userId : result.watchId,
+                notificationDescription : "You are added to the watch list...You will get notifications regarding this issue",
+                createdOn : time.now()
+            })
+            data.notificationCount = 1
+            data.save()
             logger.info("Successfully created watch", "at watchIssue() function", 10)
             let apiResponse = response.generate(false, "Successfully created watchIssue", 200, result)
             res.send(apiResponse)
@@ -262,6 +305,13 @@ let createComment = (req, res) => {
             let apiResponse = response.generate(true, "Unknown error occured", 500, null)
             res.send(apiResponse)
         } else {
+            let options = {
+                $push:{
+                    notificationDescription : "Someone commented on the issue following by you"
+                }
+            }
+            options.notificationCount = 1
+            notification.updateMany({ issueId : req.body.issueId }, options)
             logger.info("Comment created successfully", "at createComment() function", 10)
             let apiResponse = response.generate(false, "Comment created successfully", 200, result)
             res.send(apiResponse)
@@ -310,6 +360,16 @@ let deleteComment = (req, res) => {
             logger.info("Successfully deleted comment", "at deleteComment() function", 10)
             let apiResponse = response.generate(false, "Successfully deleted comment", 200, null)
             res.send(apiResponse)
+        }
+    })
+}
+
+let deleteNotification = (req, res) => {
+    notification.findOneAndDelete({ userId : req.body.userId }, (err, result) => {
+        if(err){
+            res.send(err)
+        } else {
+            res.send('Deleted')
         }
     })
 }
@@ -377,6 +437,62 @@ let numOfDays = (req, res) => {
         }
     })
 }
+let countUpdate = (req, res)=>{
+    let options = {
+        notificationCount : 0
+    }
+    notification.updateMany({'userId': req.body.userId}, options).exec((err, result) => {
+        if(err){
+            let apiResponse = response.generate(true, 'Failed To Find Notification Details', 500, null)
+            res.send(apiResponse)
+        }else{
+            let apiResponse = response.generate(false, 'All Notification count updated', 200, result)
+            res.send(apiResponse)
+        }
+    })
+}  
+
+let getNotifications = (req, res) => {
+    notification.find({ 'userId' : req.params.userId }, (err, notifications) => {
+        if(err) {
+            logger.error(err, "Error at getNotifications() function", 10)
+            let apiResponse = response.generate(true, "Error occured", 500, null)
+            res.send(apiResponse)
+        } else if(check.isEmpty(notifications)) {
+            logger.info('No notifications found', 'at getNotifications() function', 7)
+            let apiResponse = response.generate(true, "No notification details found",404, null)
+            res.send(apiResponse)
+        }
+            else {
+            logger.info('Notifications found', 'Successfull at getNotifications() function', 10)
+            let apiResponse = response.generate(false, "Succesfully found all notification details", 200, notifications)
+            res.send(apiResponse)
+        }
+    })
+}
+
+let getAllIssuesCount = (req, res) => {
+    issueModel.countDocuments({})
+    .exec((err, result) =>{
+        if(err){
+            logger.error(err.message, "Error occured at getAllIssuesCount() function", 10)
+            let apiResponse = response.generate(true, "Unknown error occured", 500, null)
+            res.send(apiResponse)
+            console.log('getAllIssuesCount')
+        } else if(result === 0) {
+            logger.error("No issues found", "at getAllIssuesCount() function", 7)
+            let apiResponse = response.generate(true, "No issues found", 404, null)
+            res.send(apiResponse)
+            console.log('getAllIssuesCount')
+        } else {
+            logger.info("Count of all Issues found", "at getAllIssuesCount() function", 10)
+            let apiResponse = response.generate(false, "Count of all issues", 200, result)
+            res.send(apiResponse)
+            console.log('getAllIssuesCount')
+        }
+        
+    })
+}
 
 module.exports = {
     createIssue : createIssue,
@@ -394,5 +510,9 @@ module.exports = {
     deleteComment : deleteComment,
     editComment : editComment,
     getAllComments : getAllComments,
-    numOfDays : numOfDays   
+    numOfDays : numOfDays,
+    countUpdate : countUpdate,
+    deleteNotification : deleteNotification,
+    getNotifications : getNotifications,
+    //getAllIssuesCount : getAllIssuesCount
 }

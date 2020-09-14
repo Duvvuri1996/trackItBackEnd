@@ -109,11 +109,11 @@ function onListening() {
         'port ' + addr.port;
     console.log('Listening on ' + bind)
     logger.info('server listening on port' + addr.port, 'serverOnlisteningHandler', 10)
-    let db = mongoose.connect(config.db.uri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        useCreateIndex: true
-    })
+    mongoose.connect(config.db.uri, 
+        {useNewUrlParser: true},
+        {useUnifiedTopology: true},
+        {useCreateIndex: true}
+    )
 }
 
 mongoose.connection.on('error', function (err) {

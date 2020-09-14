@@ -26,9 +26,9 @@ module.exports.setRouter = (app) => {
 
     app.get(`${baseUrl}/allSocialUsers`, controller.SocialUsers);
 
-    app.get('/auth/google/', passport.authenticate('google', { scope: ['profile', 'email']}));
+    app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email']}));
 
-    app.get('/auth.google/callback', passport.authenticate('google'), (req, res) => {
+    app.get('/auth/google/callback', passport.authenticate('google'), (req, res) => {
         let responseHTML = '<html><head><title>Main</title></head><body></body><script>res = %value%; window.opener.postMessage(res, "*");window.close();</script></html>'
          responseHTML = responseHTML.replace('%value%', JSON.stringify({
         user: req.user

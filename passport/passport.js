@@ -1,8 +1,9 @@
 const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const mongoose = require('mongoose');
 const time = require('../app/libs/time');
-const GoogleStrategy = require('passport-google-oauth20');
 
+//const User = mongoose.model('SocialUser');
 const User = require('../app/models/socialUserModel');
 
 const logger = require('../app/libs/logger');
@@ -20,9 +21,9 @@ passport.deserializeUser((id, done) => {
 })
 
 passport.use(new GoogleStrategy({
-    clientID : "548152252166-ib6vh2p329pur33nijhc1ms00ip9aual.apps.googleusercontent.com",
-    clientSecret : "CmsrvgQqGu2XSq7J-sm2-FCj",
-    callbackURl: "auth/google/callback",
+    clientID : "546912140270-6dojcf88mt91eqo3q5pfcqgk9psora4q.apps.googleusercontent.com",
+    clientSecret : "z3tfgOeX_WcxwEBAMbc7A9Im",
+    callbackURL: "/auth/google/callback",
     proxy: true
 }, 
 function(accessToken, refreshToken, profile, cb){

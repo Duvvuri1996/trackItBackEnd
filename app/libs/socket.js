@@ -25,17 +25,41 @@ let setServer = (server) => {
                     //setting socket userid
                     socket.userId = currentUser.userId
                     let fullName = currentUser.fullName
+                    let key = currentUser.userId
+                    let value = fullName
+                    let setUserOnline = redisLib.setNewOnlineUserInHash('trackItOnlineUserlist', key, value, (err, result) => {
+                        if (err) {
+                            console.log("some error occured")
+                        } else {
+                            redisLib.getAllUsersInHash('trackItOnlineUserlist', (err, result) => {
+                                if (err) {
+                                    console.log(err)
+                                } else {
+                                    console.log(`${fullName} is online`)
+                                    socket.broadcast.emit('online-user-list', result)
+                                }
+                            })
+                        }
+                    })
                 }
             })
         }) //end of set-user event
 
         socket.on('disconnect', () => {
             console.log("User went offline")
+            if (socket.userId) {
+                redisLib.deleteUserFromHash('trackItOnlineUserlist', socket.userId)
+                redisLib.getAllUsersInHash('trackItOnlineUserlist', (err, result) => {
+                    if (err) {
+                        console.log("Some error occured")
+                    } else {
+                        socket.broadcast.emit('online-user-list', result)
+                    }
+                })
+            }
         })
 
         socket.on('event-updates', (data) => {
-            console.log("socket event-updates called")
-            console.log(data);
             socket.broadcast.emit(data.userId, data)
         })
     })

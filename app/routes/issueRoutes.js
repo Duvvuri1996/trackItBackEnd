@@ -64,4 +64,10 @@ module.exports.setRouter = (app) => {
     app.get(`${baseUrl}/downloadFile/:fileName`, multer.downloadFile);
 
     app.post(`${baseUrl}/delete/:id`, multer.deleteFile);
+
+    app.get(`${baseUrl}/notification/:userId`, controller.getNotifications);
+
+    app.post(`${baseUrl}/notifycount`, controller.countUpdate);
+
+    //app.get(`${baseUrl}/getallissuescount`, controller.getAllIssuesCount);
 }
