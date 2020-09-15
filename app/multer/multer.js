@@ -27,7 +27,7 @@ const storage = new GridFsStorage({
                     let apiResponse = response.generate(true, "Unknown error at storage file() function", 500, null)
                     reject(apiResponse)
                 } else {
-                    const fileName = buf.toString('hex')+path.extname(file.originalname)
+                    const fileName = buff.toString('hex')+path.extname(file.originalname)
                     const fileInfo = {
                         fileName : fileName,
                         fileLocation : 'uploads'

@@ -57,11 +57,11 @@ let createIssue = (req, res) => {
             console.log(data)
             let data1 = new notification({
                 issueId : result.issueId,
-                notificationDescription : `Hey ${result.assigneeName}, new issues has been assigned to you by ${result.userName}`,
+                notificationDescription : `Hey ${result.assigneeName}, new issue has been assigned to you by ${result.userName}`,
                 userId : result.assigneeId,
-                creatodOn : time.now()
+                createdOn : time.now()
             })
-            data.notificationCount = 1
+            data1.notificationCount = 1
             data1.save()
             console.log(data1)
            logger.info("Issue created successfully", "createIssue() function", 10)
@@ -129,7 +129,7 @@ let getAllIssues = (req, res) => {
         } else if(check.isEmpty(allIssues)) {
             logger.error("No issues found", "at getAllIssues() function", 7)
             let apiResponse = response.generate(true, "No issues found", 404, null)
-            res.send(apiResponse)
+            res.send(apiResponse)   
         } else {
             logger.info("All issues found", "at getAllIssues() function", 10)
             let apiResponse = response.generate(false, "All issues found", 200, allIssues)
@@ -243,7 +243,7 @@ let watchCount = (req, res) => {
 }
 
 let allWatchOfUser = (req, res) => {
-    watcherModel.find({ userId : req.params.watchId })
+    watcherModel.find({ watchId : req.params.watchId })
     .exec((err, allDetails) => {
         if(err) {
             logger.error(err.message, "Error occurred at allWatchOfUser() function", 10)
@@ -255,18 +255,8 @@ let allWatchOfUser = (req, res) => {
             let apiResponse = response.generate(true, "issueDetails are empty", 404, null)
             res.send(apiResponse)
         } else {
-            for(let x of allDetails){
-                issueModel.findOne({issueId : x.issueId}, (err, details) => {
-                    if(err){
-                        logger.error(err.message, "Failed to find", 4)
-                    } else {
-                        userWatchDetails.push(x)
-                    }
-                })
-            }
-            console.log(userWatchDetails)
             logger.info("All details found", "at allWatchOfUser() function", 10)
-            let apiResponse = response.generate(false, "All details found", 200, userWatchDetails)
+            let apiResponse = response.generate(false, "All details found", 200, allDetails)
             res.send(apiResponse)
         }
     })
@@ -467,6 +457,14 @@ let getNotifications = (req, res) => {
             logger.info('Notifications found', 'Successfull at getNotifications() function', 10)
             let apiResponse = response.generate(false, "Succesfully found all notification details", 200, notifications)
             res.send(apiResponse)
+            for(let x of notifications){
+                if(x.notificationCount > 0){
+                    console.log(x.notificationCount)
+                }
+                else {
+                    console.log("Notification Count is 0")
+                }
+            }
         }
     })
 }
