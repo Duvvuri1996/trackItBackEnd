@@ -4,7 +4,7 @@ const shortid = require('shortid');
 const authModel = require('../models/authModel');
 const userModel = mongoose.model('User')
 const socialModel = require('../models/socialUserModel');
-const issueModel = mongoose.model('Issue');
+const issueModel = require('../models/issueModel');
 const commentModel = require('../models/comment');
 const watcherModel = require('../models/watcher');
 const paramsLib = require('../libs/params');
@@ -18,7 +18,7 @@ const mail = require('../libs/mail');
 const nodemailer = require('nodemailer');
 const response = require('../libs/response');
 const notification = require('../models/notification');
-let userWatchDetails = [];
+
 
 let createIssue = (req, res) => {
     let today = new Date()
@@ -441,6 +441,7 @@ let countUpdate = (req, res)=>{
         }
     })
 }  
+
 
 let getNotifications = (req, res) => {
     notification.find({ 'userId' : req.params.userId }, (err, notifications) => {

@@ -25,7 +25,9 @@ module.exports.setRouter = (app) => {
 
     app.get(`${baseUrl}/allIssues`, controller.getAllIssues);
 
-    app.get(`${baseUrl}/:issueId`, controller.singleIssue);
+    //app.get(`${baseUrl}/:issueId`, controller.singleIssue);
+
+    app.get(`${baseUrl}/singleissue/:issueId`, controller.singleIssue);
 
     app.get(`${baseUrl}/userid/:userId`, controller.getAllIssuesByuserId);
 
@@ -57,11 +59,11 @@ module.exports.setRouter = (app) => {
 
     app.post(`${baseUrl}/uploads`, multer.upload.single('file'), multer.uploadFile);
 
-    app.get(`${baseUrl}/allFiles`, multer.getAllFiles);
+    app.get(`${baseUrl}/allfiles`, multer.getAllFiles);
 
-    app.get(`${baseUrl}/file/:fileName`, multer.getSingleFile);
+    app.get(`${baseUrl}/file/:filename`, multer.getSingleFile);
 
-    app.get(`${baseUrl}/downloadFile/:fileName`, multer.downloadFile);
+    app.get(`${baseUrl}/downloadFile/:filename`, multer.downloadFile);
 
     app.post(`${baseUrl}/delete/:id`, multer.deleteFile);
 

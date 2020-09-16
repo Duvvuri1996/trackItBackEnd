@@ -1,12 +1,13 @@
 const config = require('/home/sowmya/trackIt/trackItBackEnd/config/config');
 const mongoose = require('mongoose');
 const path = require('path');
+const multer = require('multer');
 const response = require('../libs/response');
 const logger = require('../libs/logger');
 const crypto = require('crypto');
 const GridFsStorage = require('multer-gridfs-storage');
 const Grid = require('gridfs-stream');
-const multer = require('multer');
+
 
 let connection = mongoose.createConnection((config.db.uri),{ useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -30,7 +31,7 @@ const storage = new GridFsStorage({
                     const fileName = buff.toString('hex')+path.extname(file.originalname)
                     const fileInfo = {
                         fileName : fileName,
-                        fileLocation : 'uploads'
+                        bucketName : 'uploads'
                     }
                     resolve(fileInfo)
                 }
@@ -46,62 +47,58 @@ let uploadFile = (req, res) => {
     res.json({ file:req.file, FileName : req.file.fileName })
 }
 
-let getAllFiles = (req, res) => {
-    gfs.files.find()
-    .exec((err, fileDetails) => {
-        if(err) {
-            logger.error(err.message, "Unknown error occurred at getAllFiels()", 10)
-            let apiResponse = response.generate(true, "Unknown error at getAllFiles()", 500, null)
+let getAllFiles = async(req, res) => {
+    let files=await gfs.files.find({}).toArray()
+    try{ 
+        let apiResponse = response.generate(false, 'All Files Found', 200, files)
+         res.send(apiResponse)
+       } catch(err){
+        logger.error(err.message, 'Multer: getAllFile', 10)
+        let apiResponse = response.generate(true, 'Failed To Find File Data', 500, null)
+        res.send(apiResponse)
+       }
+  }
+
+let getSingleFile = async(req, res) => {
+    file = await gfs.files.findOne({ filename: req.params.filename })
+        try{
+            let apiResponse = response.generate(false, 'All Files Found', 200, file)
             res.send(apiResponse)
-        } else {
-            logger.info("Successfully retreived all details", "at getAllFiles() function", 10)
-            let apiResponse = response.generate(false, "Successfully retreieved successfully", 200, fileDetails)
+        } catch(err){
+            logger.error(err.message, 'Multer: getSingleFile', 10)
+            let apiResponse = response.generate(true, 'Failed To Find File Data', 500, null)
             res.send(apiResponse)
         }
-    })
-}
+  }
 
-let getSingleFile = (req, res) => {
-    gfs.files.findOne({ fileName : req.params.fileName }).exec((err, file) => {
-        if(err) {
-            logger.error(err.message, "Unknown error occurred at getSingleFile()", 10)
-            let apiResponse = response.generate(true, "Unknown error at getSingleFile()", 500, null)
-            res.send(apiResponse)
-        } else {
-            logger.info("Successfully retreived all details", "at getSingleFile() function", 10)
-            let apiResponse = response.generate(false, "Successfully retreieved details", 200, file)
-            res.send(apiResponse)
-        }
-    })
-}
-
-let downloadFile = (req, res) => {
-    gfs.files.findOne({ fileName : req.params.fileName }).exec((err, file) => {
-        if(err) {
-            logger.error(err.message, "Unknown error occurred at downloadFile()", 10)
-            let apiResponse = response.generate(true, "Unknown error at downloadFile()", 500, null)
-            res.send(apiResponse) 
-        } else {
-            let readStream = gfs.createReadStream({ fileName : file.fileName })
-            res.set('Content-Type', file.contentType)
+let downloadFile = async(req, res) => {
+    let file = await gfs.files.findOne({ filename: req.params.filename })
+        try{
+            
+            const readStream = gfs.createReadStream({filename: file.filename});
+            console.log(readStream)
+            console.log('This is file '+ file )
+           res.set('Content-Type', file.contentType)
             readStream.pipe(res)
+            
+        } catch(err){
+            logger.error(err.message, 'Multer: downloadFile', 10)
+            let apiResponse = response.generate(true, 'Failed To Find File Data', 500, null)
+            res.send(apiResponse)
         }
-    })
-}
+  }
 
-let deleteFile = (req, res) => {
-    gfs.files.deleteOne({ _id : req.params.id, root : 'uploads' }).exec((err, result) => {
-        if(err) {
-            logger.error(err.message, "Unknown error occurred at deleteFile()", 10)
-            let apiResponse = response.generate(true, "Unknown error at deleteFile()", 500, null)
+let deleteFile = async(req, res) => {
+    const result =  await gfs.files.deleteOne({ _id: req.params.id, root: 'uploads' })
+        try{
+            let apiResponse = response.generate(false, 'File Deleted succesfully', 200, result)
             res.send(apiResponse)
-        } else {
-            logger.info("Successfully deleted file", "at deleteFile() function", 10)
-            let apiResponse = response.generate(false, "Successfully deleted file", 200, null)
+        } catch(err){
+            logger.error(err.message, 'Multer: deleteFile', 10)
+            let apiResponse = response.generate(true, 'Failed To Delete File Data', 500, null)
             res.send(apiResponse)
         }
-    })
-}
+  }
 
 module.exports = {
     upload : upload,
