@@ -58,7 +58,6 @@ let signUpUser = (req,res) => {
                         userEmail : req.body.userEmail,
                         userPassword : passwordLib.hashPassword(req.body.userPassword),
                         mobileNumber : req.body.mobileNumber,
-                        country : req.body.country
                     })
                     newUser.save((err, user) => {
                         if(err) {

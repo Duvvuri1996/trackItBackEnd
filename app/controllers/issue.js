@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const shortid = require('shortid');
 const authModel = require('../models/authModel');
 const userModel = mongoose.model('User')
@@ -30,7 +29,6 @@ let createIssue = (req, res) => {
         assigneeName : req.body.assigneeName,
         issueTitle : req.body.issueTitle,
         issueDescription : req.body.issueDescription,
-        
         status : req.body.status,
         createdOn : new Date(),
     })
@@ -50,20 +48,22 @@ let createIssue = (req, res) => {
                 issueId : result.issueId,
                 notificationDescription : "Your Issue has been created successfully",
                 userId : result.userId,
-                createdOn : time.now()
+                createdOn : time.now(),
+                notificationCount : 1
             })
-            data.notificationCount = 1
+            
             data.save()
             console.log(data)
             let data1 = new notification({
                 issueId : result.issueId,
                 notificationDescription : `Hey ${result.assigneeName}, new issue has been assigned to you by ${result.userName}`,
                 userId : result.assigneeId,
-                createdOn : time.now()
+                createdOn : time.now(),
+                notificationCount : 1
             })
-            data1.notificationCount = 1
+            
             data1.save()
-            console.log(data1)
+            console.log(result)
            logger.info("Issue created successfully", "createIssue() function", 10)
            let apiResponse = response.generate(false, "Issue creeated succesfully", 200, result)
            res.send(apiResponse)
@@ -80,7 +80,7 @@ let deleteIssue = (req, res) => {
             res.send(apiResponse)
         } else {
             logger.info("Issue deleted successfully", "deleteIssue() function", 10)
-            let apiResponse = response.generate(fasle, "Issue deleted successfully", 200, "deleted")
+            let apiResponse = response.generate(false, "Issue deleted successfully", 200, "deleted")
             res.send(apiResponse)
         }
     })
@@ -106,10 +106,11 @@ let editIssue = (req, res) => {
 
             let options = {
                 $push:{
-                    notificationDescription : "Someone edited the issue following by you"
+                    notificationDescription : "Someone edited the issue following by you",
+                    notificationCount  : 1
                 }
             }
-            options.notificationCount = 1
+            
             notification.updateMany({ issueId : req.params.issueId }, options)
             logger.info("Issue updated successfully", "Success at editIssue() function", 10)
             let apiResponse = response.generate(false, "Issue updated successfully", 200, details)
@@ -199,29 +200,63 @@ let getAllIssuesByassineeId = (req, res) => {
 }
 
 let watchIssue = (req, res) => {
-    let newWatch = new watcherModel({
-        issueId : req.body.issueId,
-        watchId : req.body.watchId
+
+    watcherModel.find({ issueId : req.body.issueId, watchId : req.body.watchId }).exec((err, details) => {
+    if(err){
+        logger.error(err, "At watchIssue() function", 10)
+        let apiResponse = response.generate(err.message, "Unknown error occured ", 500, null)
+        res.send(apiResponse) 
+    }else if(details) {
+        logger.info("User already in watch list", "at watchIssue() function", 10)
+        let apiResponse = response.generate(true, "User already under watch list...cannot be added", 404, details)
+        res.send(apiResponse)
+    } else {
+        let newWatch = new watcherModel({
+            issueId : req.body.issueId,
+            watchId : req.body.watchId
+        })
+        console.log(req.body.watchId)
+        console.log(req.body.issueId+ " issue")
+        newWatch.save((err, result) => {
+            if(err) {
+                logger.error(err.message, "Error occurred at watchIssue() function", 10)
+                let apiResponse = response.generate(true, "Unknown error occured", 500, null)
+                res.send(apiResponse)
+            } else {
+                delete result._id
+                delete result.__v
+                console.log(result.watchId)
+                let data = new notification({
+                    issueId : result.issueId,
+                    userId : result.watchId,
+                    notificationDescription : "You are added to the watch list...You will get notifications regarding this issue",
+                    createdOn : time.now(),
+                    notificationCount : 1
+                })
+                
+                data.save()
+                logger.info("Successfully created watch", "at watchIssue() function", 10)
+                let apiResponse = response.generate(false, "Successfully created watchIssue", 200, result)
+                res.send(apiResponse)
+            }
+        })
+    }
     })
-    newWatch.save((err, result) => {
+}
+
+let deleteWatch = (req, res) => {
+    watcherModel.findOneAndDelete({ issueId : req.body.issueid, watchId : req.body.watchId }).exec((err, result) => {
         if(err) {
-            logger.error(err.message, "Error occurred at watchIssue() function", 10)
-            let apiResponse = response.generate(true, "Unknown error occured", 500, null)
+            logger.error(err, "Unknown error occurred at delete() Function", 10)
+            let apiResponse = response.generate(true, "Unknown error occured at delete() watcherFunction", 500, null)
             res.send(apiResponse)
-        } else {
-            delete result._id
-            delete result.__v
-            console.log(result.watchId)
-            let data = new notification({
-                issueId : result.issueId,
-                userId : result.watchId,
-                notificationDescription : "You are added to the watch list...You will get notifications regarding this issue",
-                createdOn : time.now()
-            })
-            data.notificationCount = 1
-            data.save()
-            logger.info("Successfully created watch", "at watchIssue() function", 10)
-            let apiResponse = response.generate(false, "Successfully created watchIssue", 200, result)
+        } else if (check.isEmpty(result)){
+            let apiResponse = response.generate(true, "User not part of watch lis")
+            res.send(apiResponse)
+            console.log(result)
+        } 
+        else {
+            let apiResponse = response.generate(false, "At delete() watcher function", 200, null)
             res.send(apiResponse)
         }
     })
@@ -297,10 +332,11 @@ let createComment = (req, res) => {
         } else {
             let options = {
                 $push:{
-                    notificationDescription : "Someone commented on the issue following by you"
+                    notificationDescription : "Someone commented on the issue following by you",
+                    notificationCount : 1
                 }
             }
-            options.notificationCount = 1
+            
             notification.updateMany({ issueId : req.body.issueId }, options)
             logger.info("Comment created successfully", "at createComment() function", 10)
             let apiResponse = response.generate(false, "Comment created successfully", 200, result)
@@ -428,19 +464,18 @@ let numOfDays = (req, res) => {
     })
 }
 let countUpdate = (req, res)=>{
-    let options = {
-        notificationCount : 0
-    }
-    notification.updateMany({'userId': req.body.userId}, options).exec((err, result) => {
+    
+    notification.updateMany({'userId': req.body.userId}).exec((err, result) => {
         if(err){
             let apiResponse = response.generate(true, 'Failed To Find Notification Details', 500, null)
             res.send(apiResponse)
         }else{
             let apiResponse = response.generate(false, 'All Notification count updated', 200, result)
             res.send(apiResponse)
+            console.log(result)
         }
     })
-}  
+}
 
 
 let getNotifications = (req, res) => {
@@ -457,15 +492,8 @@ let getNotifications = (req, res) => {
             else {
             logger.info('Notifications found', 'Successfull at getNotifications() function', 10)
             let apiResponse = response.generate(false, "Succesfully found all notification details", 200, notifications)
+            console.log(notifications)
             res.send(apiResponse)
-            for(let x of notifications){
-                if(x.notificationCount > 0){
-                    console.log(x.notificationCount)
-                }
-                else {
-                    console.log("Notification Count is 0")
-                }
-            }
         }
     })
 }
@@ -477,21 +505,39 @@ let getAllIssuesCount = (req, res) => {
             logger.error(err.message, "Error occured at getAllIssuesCount() function", 10)
             let apiResponse = response.generate(true, "Unknown error occured", 500, null)
             res.send(apiResponse)
-            console.log('getAllIssuesCount')
+            
         } else if(result === 0) {
             logger.error("No issues found", "at getAllIssuesCount() function", 7)
             let apiResponse = response.generate(true, "No issues found", 404, null)
             res.send(apiResponse)
-            console.log('getAllIssuesCount')
+          
         } else {
             logger.info("Count of all Issues found", "at getAllIssuesCount() function", 10)
             let apiResponse = response.generate(false, "Count of all issues", 200, result)
             res.send(apiResponse)
-            console.log('getAllIssuesCount')
+            
         }
         
     })
 }
+
+let removeWatchersOnIssue = (req, res) => {
+        watcherModel.deleteMany({issueId: req.params.issueId})
+        .exec((err, result) => {
+            if(err) {
+                let apiResponse = response.generate(true, "Couldn't remove watchers on the issue", 500, null);
+                res.send(apiResponse);
+            } else if(check.isEmpty(result)) {
+                let apiResponse = response.generate(true, "Details are empty with no watcher", 404, null)
+                res.send(apiResponse)
+            } else {
+                let apiResponse = response.generate(true, "Deleted successfully all watchers", 200, null)
+                res.send(apiResponse)
+            }
+        })
+}
+
+
 
 module.exports = {
     createIssue : createIssue,
@@ -514,4 +560,6 @@ module.exports = {
     deleteNotification : deleteNotification,
     getNotifications : getNotifications,
     //getAllIssuesCount : getAllIssuesCount
+    removeWatchersOnIssue : removeWatchersOnIssue,
+    deleteWatch : deleteWatch
 }

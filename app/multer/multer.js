@@ -76,8 +76,8 @@ let downloadFile = async(req, res) => {
         try{
             
             const readStream = gfs.createReadStream({filename: file.filename});
-            console.log(readStream)
-            console.log('This is file '+ file )
+            console.log(file.filename+" file name is this!")
+            
            res.set('Content-Type', file.contentType)
             readStream.pipe(res)
             

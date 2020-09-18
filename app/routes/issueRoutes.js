@@ -6,6 +6,7 @@ const controller = require('/home/sowmya/trackIt/trackItBackEnd/app/controllers/
 const multer = require('/home/sowmya/trackIt/trackItBackEnd/app/multer/multer')
 const Grid = require('gridfs-stream');
 const passport = require('passport');
+const { base } = require('../models/comment');
 let connection = mongoose.createConnection(config.db.uri)
 let gfs
 connection.once('open', function() {
@@ -65,11 +66,15 @@ module.exports.setRouter = (app) => {
 
     app.get(`${baseUrl}/downloadFile/:filename`, multer.downloadFile);
 
-    app.post(`${baseUrl}/delete/:id`, multer.deleteFile);
+    app.post(`${baseUrl}/deleteFile/:id`, multer.deleteFile);
 
     app.get(`${baseUrl}/notification/:userId`, controller.getNotifications);
 
     app.post(`${baseUrl}/notifycount`, controller.countUpdate);
+
+    app.post(`${baseUrl}/removeWatchersOnIssue/:issueId`, controller.removeWatchersOnIssue);
+
+    app.post(`${baseUrl}/deleteWatch`, controller.deleteWatch);
 
     //app.get(`${baseUrl}/getallissuescount`, controller.getAllIssuesCount);
 }

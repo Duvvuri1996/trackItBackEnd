@@ -21,10 +21,6 @@ let User = new Schema ({
         type : String,
         default : ''
     },
-    country : {
-        type : String,
-        default : ''
-    },
     recoveryToken : {
         type: String,
         default : ''
