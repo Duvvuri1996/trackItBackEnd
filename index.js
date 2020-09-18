@@ -15,6 +15,9 @@ const errorHandlerMiddleware = require('./app/middlewares/appErrorHandler');
 const reqLogger = require('./app/middlewares/reqLogger');
 const method = require('method-override');
 
+
+app.use('/apiDoc', express.static('apidoc'));
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(method('_method'));

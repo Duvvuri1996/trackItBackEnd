@@ -1,0 +1,16 @@
+{
+  "name": "Issue Tracker Tool",
+  "version": "1.0.0",
+  "description": "Documentation for Issue tracking tool",
+  "title": "Issue Tracker Tool APIs",
+  "url": "http://localhost:3000",
+  "sampleUrl": false,
+  "defaultVersion": "0.0.0",
+  "apidoc": "0.3.0",
+  "generator": {
+    "name": "apidoc",
+    "time": "2020-09-18T09:12:55.413Z",
+    "url": "https://apidocjs.com",
+    "version": "0.25.0"
+  }
+}
